@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,7 +15,8 @@ import (
 )
 
 var (
-	genesisDocs = make(map[string]types.GenesisDoc)
+	genesisDocs              = make(map[string]types.GenesisDoc)
+	errorEmptyValidatorField = errors.New("incorrect validator fields")
 )
 
 type ErrorGenesisDocNotFound struct {
@@ -35,13 +37,13 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 func newHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<h1>New genesis</h1>"+
 		"<form action=\"/create\" method=\"POST\">"+
-		"ChainID <input type=\"text\" name=\"chainID\"><br>"+
-		"ConsensusParams (not working now) <textarea name=\"consensus_params\"></textarea><br>"+
-		"Your Validator PubKey (raw json) (optional) <textarea name=\"your_validator_pubkey\"></textarea><br>"+
-		"Your Validator Power (optional) <input type=\"number\" name=\"your_validator_power\"><br>"+
-		"Your Validator Name (optional) <input type=\"text\" name=\"your_validator_name\"><br>"+
-		"App Hash <input type=\"text\" name=\"app_hash\"><br>"+
-		"App State (raw json) <textarea name=\"app_state\"></textarea><br>"+
+		"ChainID <input type=\"text\" name=\"chainID\" required><br>"+
+		// "ConsensusParams (not working now) <textarea name=\"consensus_params\"></textarea><br>"+
+		"Your Validator PubKey (raw json) (optional) <textarea name=\"validator_pubkey\"></textarea><br>"+
+		"Your Validator Power (optional) <input type=\"number\" name=\"validator_power\"><br>"+
+		"Your Validator Name (optional) <input type=\"text\" name=\"validator_name\"><br>"+
+		"App Hash (optional) <input type=\"text\" name=\"app_hash\"><br>"+
+		"App State (raw json) (optional) <textarea name=\"app_state\"></textarea><br>"+
 		"<input type=\"submit\" value=\"Create\">"+
 		"</form>")
 }
@@ -53,27 +55,13 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 	consensusParams := types.DefaultConsensusParams()
 
 	validators := []types.GenesisValidator{}
-	if r.FormValue("your_validator_pubkey") != "" && r.FormValue("your_validator_power") != "" && r.FormValue("your_validator_name") != "" {
-		power, err := strconv.ParseInt(r.FormValue("your_validator_power"), 10, 64)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusNotAcceptable)
-			return
-		}
 
-		var yourValidatorPubKey crypto.PubKey
-		err = json.Unmarshal([]byte(r.FormValue("your_validator_pubkey")), &yourValidatorPubKey)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		validators = append(validators, types.GenesisValidator{
-			PubKey: yourValidatorPubKey,
-			Power:  power,
-			Name:   r.FormValue("your_validator_name"),
-		})
-	} else {
-		http.Error(w, "incorrect your_validator fields", http.StatusNotAcceptable)
+	validator, err := buildValidator(r)
+	if err != nil && err != errorEmptyValidatorField {
+		http.Error(w, err.Error(), http.StatusNotAcceptable)
 		return
+	} else if err == nil {
+		validators = append(validators, validator)
 	}
 
 	appHash := r.FormValue("app_hash")
@@ -113,9 +101,9 @@ func newValidatorHandler(w http.ResponseWriter, r *http.Request, chainID string)
 
 	fmt.Fprintf(w, "<h1>Add validator</h1>"+
 		"<form action=\"/add_validator/%s\" method=\"POST\">"+
-		"Your Validator PubKey (raw json) (optional) <textarea name=\"your_validator_pubkey\"></textarea><br>"+
-		"Your Validator Power (optional) <input type=\"number\" name=\"your_validator_power\"><br>"+
-		"Your Validator Name (optional) <input type=\"text\" name=\"your_validator_name\"><br>"+
+		"Your Validator PubKey (raw json) <textarea name=\"validator_pubkey\"></textarea><br>"+
+		"Your Validator Power <input type=\"number\" name=\"validator_power\"><br>"+
+		"Your Validator Name <input type=\"text\" name=\"validator_name\"><br>"+
 		"<input type=\"submit\" value=\"Add\">"+
 		"</form>", chainID)
 }
@@ -127,30 +115,15 @@ func addValidatorHandler(w http.ResponseWriter, r *http.Request, chainID string)
 		return
 	}
 
-	if r.FormValue("your_validator_pubkey") != "" && r.FormValue("your_validator_power") != "" && r.FormValue("your_validator_name") != "" {
-		power, err := strconv.ParseInt(r.FormValue("your_validator_power"), 10, 64)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusNotAcceptable)
-			return
-		}
-
-		var yourValidatorPubKey crypto.PubKey
-		err = json.Unmarshal([]byte(r.FormValue("your_validator_pubkey")), &yourValidatorPubKey)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		genDoc.Validators = append(genDoc.Validators, types.GenesisValidator{
-			PubKey: yourValidatorPubKey,
-			Power:  power,
-			Name:   r.FormValue("your_validator_name"),
-		})
-		genesisDocs[chainID] = genDoc
-		http.Redirect(w, r, "/view/"+chainID, http.StatusFound)
-	} else {
-		http.Error(w, "incorrect your_validator fields", http.StatusNotAcceptable)
+	validator, err := buildValidator(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotAcceptable)
 		return
 	}
+
+	genDoc.Validators = append(genDoc.Validators, validator)
+	genesisDocs[chainID] = genDoc
+	http.Redirect(w, r, "/view/"+chainID, http.StatusFound)
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request, chainID string) {
@@ -160,14 +133,37 @@ func viewHandler(w http.ResponseWriter, r *http.Request, chainID string) {
 		return
 	}
 
-	bytes, err := json.Marshal(genDoc)
+	json, err := json.MarshalIndent(genDoc, "", "  ")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	fmt.Fprintf(w, string(bytes))
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, "%s", string(json))
+}
+
+func buildValidator(r *http.Request) (types.GenesisValidator, error) {
+	if r.FormValue("validator_pubkey") == "" || r.FormValue("validator_power") == "" || r.FormValue("validator_name") == "" {
+		return types.GenesisValidator{}, errorEmptyValidatorField
+	}
+
+	power, err := strconv.ParseInt(r.FormValue("validator_power"), 10, 64)
+	if err != nil {
+		return types.GenesisValidator{}, err
+	}
+
+	var pubKey crypto.PubKey
+	err = json.Unmarshal([]byte(r.FormValue("validator_pubkey")), &pubKey)
+	if err != nil {
+		return types.GenesisValidator{}, err
+	}
+
+	return types.GenesisValidator{
+		PubKey: pubKey,
+		Power:  power,
+		Name:   r.FormValue("validator_name"),
+	}, nil
 }
 
 func main() {
