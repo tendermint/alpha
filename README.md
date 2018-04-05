@@ -15,4 +15,4 @@ wget https://github.com/tendermint/alpha/raw/master/alpha.go && go run alpha.go
 - no logs
 - open-source
 - 180 lines of code
-- one file
+- single file
