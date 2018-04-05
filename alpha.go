@@ -73,7 +73,7 @@ func newHandler(w http.ResponseWriter, r *http.Request) {
 		"<form action=\"/create\" method=\"POST\">" +
 		"ChainID <input type=\"text\" name=\"chainID\" required><br>" +
 		// "ConsensusParams (not working now) <textarea name=\"consensus_params\"></textarea><br>"+
-		"Your Validator PubKey (raw json) (optional) <textarea name=\"validator_pubkey\"></textarea><br>" +
+		"Your Validator PubKey (raw json; output of `tendermint show_validator`) (optional) <textarea name=\"validator_pubkey\"></textarea><br>" +
 		"Your Validator Power (optional) <input type=\"number\" name=\"validator_power\"><br>" +
 		"Your Validator Name (optional) <input type=\"text\" name=\"validator_name\"><br>" +
 		"App Hash (optional) <input type=\"text\" name=\"app_hash\"><br>" +
@@ -145,7 +145,7 @@ func newValidatorHandler(w http.ResponseWriter, r *http.Request, chainID string)
 
 	data := fmt.Sprintf("<h1>Add validator</h1>"+
 		"<form action=\"/add_validator/%s\" method=\"POST\">"+
-		"Your Validator PubKey (raw json) <textarea name=\"validator_pubkey\"></textarea><br>"+
+		"Your Validator PubKey (raw json; output of `tendermint show_validator`) <textarea name=\"validator_pubkey\"></textarea><br>"+
 		"Your Validator Power <input type=\"number\" name=\"validator_power\"><br>"+
 		"Your Validator Name <input type=\"text\" name=\"validator_name\"><br>"+
 		"<input type=\"submit\" value=\"Add\">"+
