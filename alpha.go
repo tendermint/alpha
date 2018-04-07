@@ -27,7 +27,15 @@ const tpl = `
 	<meta name="description" content="Tiny web app to help you form a genesis file">
 	<meta name="author" content="Anton Kaliaev">
 
+	<link href="https://fonts.googleapis.com/css?family=Slabo+27px" rel="stylesheet">
+	<link rel="stylesheet" href="https://unpkg.com/blaze/scss/dist/components.buttons.min.css">
+	<link rel="stylesheet" href="https://unpkg.com/blaze/scss/dist/components.inputs.min.css">
+
 	<style>
+		body {
+			font-family: 'Slabo 27px', serif;
+			font-size: 21px;
+		}
 	</style>
 
 	<!--[if lt IE 9]>
@@ -36,7 +44,9 @@ const tpl = `
 </head>
 
 <body>
-	{{.}}
+	<div style="width:40%; margin:0 auto;">
+		{{.}}
+	</div>
 </body>
 </html>`
 
@@ -57,10 +67,16 @@ func (e errorGenesisNotFound) Error() string {
 
 func listHandler(w http.ResponseWriter, r *http.Request) {
 	var b strings.Builder
+	fmt.Fprintf(&b, "<h1>Genesis files</h1>")
+	fmt.Fprintf(&b, "<ul>")
 	for chainID := range genesisDocs {
-		fmt.Fprintf(&b, "<h1><a href=\"/view/%s\">%s</a></h1>", chainID, chainID)
+		fmt.Fprintf(&b, "<li><h3><a href=\"/view/%s\">%s</a></h3></li>", chainID, chainID)
 	}
-	fmt.Fprintf(&b, "<a href=\"/new\">New</a>")
+	if len(genesisDocs) == 0 {
+		fmt.Fprintf(&b, "<li><h3>No genesis files :(<h3></li>")
+	}
+	fmt.Fprintf(&b, "</ul>")
+	fmt.Fprintf(&b, "<a href=\"/new\" class=\"c-button c-button--info\">New</a>")
 
 	err := pageTemplate.Execute(w, template.HTML(b.String()))
 	if err != nil {
@@ -71,14 +87,14 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 func newHandler(w http.ResponseWriter, r *http.Request) {
 	data := "<h1>New genesis</h1>" +
 		"<form action=\"/create\" method=\"POST\">" +
-		"ChainID <input type=\"text\" name=\"chainID\" required><br>" +
+		"ChainID (*) <input type=\"text\" name=\"chainID\" class=\"c-field\" required><br>" +
 		// "ConsensusParams (not working now) <textarea name=\"consensus_params\"></textarea><br>"+
-		"Your Validator PubKey (raw json; output of `tendermint show_validator`) (optional) <textarea name=\"validator_pubkey\"></textarea><br>" +
-		"Your Validator Power (optional) <input type=\"number\" name=\"validator_power\"><br>" +
-		"Your Validator Name (optional) <input type=\"text\" name=\"validator_name\"><br>" +
-		"App Hash (optional) <input type=\"text\" name=\"app_hash\"><br>" +
-		"App State (raw json) (optional) <textarea name=\"app_state\"></textarea><br>" +
-		"<input type=\"submit\" value=\"Create\">" +
+		"Your Validator PubKey (raw json; output of `tendermint show_validator`) (optional) <textarea name=\"validator_pubkey\" rows=\"6\" class=\"c-field\"></textarea><br>" +
+		"Your Validator Power (optional) <input type=\"number\" name=\"validator_power\" class=\"c-field\"><br>" +
+		"Your Validator Name (optional) <input type=\"text\" name=\"validator_name\" class=\"c-field\"><br>" +
+		"App Hash (optional) <input type=\"text\" name=\"app_hash\" class=\"c-field\"><br>" +
+		"App State (raw json) (optional) <textarea name=\"app_state\" rows=\"6\" class=\"c-field\"></textarea><br>" +
+		"<input type=\"submit\" value=\"Create\" class=\"c-button c-button--info\">" +
 		"</form>"
 
 	err := pageTemplate.Execute(w, template.HTML(data))
@@ -145,10 +161,10 @@ func newValidatorHandler(w http.ResponseWriter, r *http.Request, chainID string)
 
 	data := fmt.Sprintf("<h1>Add validator</h1>"+
 		"<form action=\"/add_validator/%s\" method=\"POST\">"+
-		"Your Validator PubKey (raw json; output of `tendermint show_validator`) <textarea name=\"validator_pubkey\"></textarea><br>"+
-		"Your Validator Power <input type=\"number\" name=\"validator_power\"><br>"+
-		"Your Validator Name <input type=\"text\" name=\"validator_name\"><br>"+
-		"<input type=\"submit\" value=\"Add\">"+
+		"Your Validator PubKey (raw json; output of `tendermint show_validator`) <textarea name=\"validator_pubkey\" rows=\"6\" class=\"c-field\" required></textarea><br>"+
+		"Your Validator Power <input type=\"number\" name=\"validator_power\" class=\"c-field\" required><br>"+
+		"Your Validator Name <input type=\"text\" name=\"validator_name\" class=\"c-field\" required><br>"+
+		"<input type=\"submit\" value=\"Add\" class=\"c-button c-button--info\">"+
 		"</form>", chainID)
 
 	err := pageTemplate.Execute(w, template.HTML(data))
