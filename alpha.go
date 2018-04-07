@@ -139,7 +139,7 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-var validPath = regexp.MustCompile("^/(new_validator|add_validator|view)/([a-zA-Z0-9]+)$")
+var validPath = regexp.MustCompile("^/(new_validator|add_validator|view|download)/([a-zA-Z0-9_-]+)$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -204,7 +204,31 @@ func viewHandler(w http.ResponseWriter, r *http.Request, chainID string) {
 		return
 	}
 
+	var b strings.Builder
+	fmt.Fprintf(&b, "<h1>%d validators have checked in so far</h1>", len(genDoc.Validators))
+	fmt.Fprintf(&b, "<a href=\"/download/%s\" class=\"c-button c-button--info\">Download genesis file</a>", chainID)
+	fmt.Fprintf(&b, "<pre style=\"font-size:16px;\"><code>%s</code></pre>", string(json))
+	err = pageTemplate.Execute(w, template.HTML(b.String()))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func downloadHandler(w http.ResponseWriter, r *http.Request, chainID string) {
+	genDoc, ok := genesisDocs[chainID]
+	if !ok {
+		http.Error(w, errorGenesisNotFound{chainID}.Error(), http.StatusNotFound)
+		return
+	}
+
+	json, err := json.MarshalIndent(genDoc, "", "  ")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Disposition", "attachment;")
 	w.Header().Set("Content-Type", "application/json")
+
 	fmt.Fprintf(w, "%s", string(json))
 }
 
@@ -242,6 +266,7 @@ func main() {
 	http.HandleFunc("/new_validator/", makeHandler(newValidatorHandler))
 	http.HandleFunc("/add_validator/", makeHandler(addValidatorHandler))
 	http.HandleFunc("/view/", makeHandler(viewHandler))
+	http.HandleFunc("/download/", makeHandler(downloadHandler))
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
