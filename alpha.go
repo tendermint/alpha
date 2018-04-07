@@ -216,12 +216,14 @@ func buildValidator(r *http.Request) (types.GenesisValidator, error) {
 	power, err := strconv.ParseInt(r.FormValue("validator_power"), 10, 64)
 	if err != nil {
 		return types.GenesisValidator{}, err
+	} else if power < 0 {
+		return types.GenesisValidator{}, errors.New("Power can't be negative")
 	}
 
 	var pubKey crypto.PubKey
 	err = json.Unmarshal([]byte(r.FormValue("validator_pubkey")), &pubKey)
 	if err != nil {
-		return types.GenesisValidator{}, err
+		return types.GenesisValidator{}, fmt.Errorf("Failed to parse PubKey: %v", err)
 	}
 
 	return types.GenesisValidator{
