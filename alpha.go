@@ -52,7 +52,7 @@ const tpl = `
 
 var (
 	genesisDocs              = make(map[string]types.GenesisDoc)
-	errorEmptyValidatorField = errors.New("incorrect validator fields")
+	errorEmptyValidatorField = errors.New("Please fill in all fields")
 )
 
 var pageTemplate = template.Must(template.New("page").Parse(tpl))
@@ -104,7 +104,18 @@ func newHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func createHandler(w http.ResponseWriter, r *http.Request) {
+	var chainIDRegexp = regexp.MustCompile("^[a-zA-Z0-9-_]+$")
 	chainID := r.FormValue("chainID")
+	if chainID == "" {
+		http.Error(w, "chainID is required", http.StatusNotAcceptable)
+		return
+	} else if !chainIDRegexp.MatchString(chainID) {
+		http.Error(w, "please keep it simple and stick with [a-zA-Z0-9-_] for chainID", http.StatusNotAcceptable)
+		return
+	} else if _, ok := genesisDocs[chainID]; ok {
+		http.Error(w, fmt.Sprintf("genesis file for such chainID (%q) already exist", chainID), http.StatusNotAcceptable)
+		return
+	}
 
 	// TODO allow changing
 	consensusParams := types.DefaultConsensusParams()
