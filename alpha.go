@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -198,6 +199,9 @@ func addValidatorHandler(w http.ResponseWriter, r *http.Request, chainID string)
 	}
 
 	genDoc.Validators = append(genDoc.Validators, validator)
+	sort.Slice(genDoc.Validators, func(i, j int) bool {
+		return genDoc.Validators[i].Power > genDoc.Validators[j].Power
+	})
 	genesisDocs[chainID] = genDoc
 	http.Redirect(w, r, "/view/"+chainID, http.StatusFound)
 }
