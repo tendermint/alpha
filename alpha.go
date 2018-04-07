@@ -174,7 +174,7 @@ func newValidatorHandler(w http.ResponseWriter, r *http.Request, chainID string)
 	data := fmt.Sprintf("<h1>Add validator</h1>"+
 		"<form action=\"/add_validator/%s\" method=\"POST\">"+
 		"Your Validator PubKey (raw json; output of `tendermint show_validator`) <textarea name=\"validator_pubkey\" rows=\"6\" class=\"c-field\" required></textarea><br>"+
-		"Your Validator Power <input type=\"number\" name=\"validator_power\" class=\"c-field\" required><br>"+
+		"Your Validator Power <input type=\"number\" name=\"validator_power\" value=\"10\" class=\"c-field\" required><br>"+
 		"Your Validator Name <input type=\"text\" name=\"validator_name\" class=\"c-field\" required><br>"+
 		"<input type=\"submit\" value=\"Add\" class=\"c-button c-button--info\">"+
 		"</form>", chainID)
