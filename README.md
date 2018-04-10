@@ -10,7 +10,9 @@ Tiny web app to help you form a genesis file
 wget https://github.com/tendermint/alpha/raw/master/alpha.go && go run alpha.go
 ```
 
-If that does not work, clone the whole repository and use `dep ensure` (https://github.com/golang/dep).
+If that failed with something like `cannot use pubKey ... as type`, remove
+`$GOPATH/src/github.com/tendermint/go-crypto` or run it inside a Docker
+container.
 
 ## Advantages
 
