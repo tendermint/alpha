@@ -1,10 +1,17 @@
-FROM golang:latest
+FROM golang:1.10-alpine
 
-WORKDIR /go/src/app
-COPY . .
+RUN apk add --no-cache git
+
+WORKDIR /go/src/alpha
+COPY alpha.go .
 
 RUN go get -d -v ./...
-# RUN go install -v ./...
+
+# hack
+RUN cd /go/src/github.com/tendermint/tendermint && git checkout develop && cd -
+RUN cd /go/src/github.com/tendermint/tmlibs && git checkout develop && cd -
+
+RUN go install -v ./...
 
 EXPOSE 8080
 
