@@ -14,6 +14,14 @@ If that failed with something like `cannot use pubKey ... as type`, remove
 `$GOPATH/src/github.com/tendermint/go-crypto` or run it inside a Docker
 container.
 
+OR
+
+```
+docker run -it --rm -p "8080:8080" melekes/alpha
+```
+
+[More info on Docker Hub](https://hub.docker.com/r/melekes/alpha/)
+
 ## Advantages
 
 - no logs
