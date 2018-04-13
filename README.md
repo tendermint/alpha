@@ -20,3 +20,12 @@ container.
 - open-source
 - 200 lines of code
 - single file
+
+## Docker
+
+Build docker:
+
+```
+CGO_ENABLED=0 GOOS=linux go build -ldflags "-s -w" -o alpha
+docker build -t "your_account/alpha" .
+```
