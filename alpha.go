@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	amino "github.com/tendermint/go-amino"
 	crypto "github.com/tendermint/go-crypto"
 	"github.com/tendermint/tendermint/types"
 )
@@ -54,7 +55,12 @@ const tpl = `
 var (
 	genesisDocs              = make(map[string]types.GenesisDoc)
 	errorEmptyValidatorField = errors.New("Please fill in all fields")
+	cdc                      = amino.NewCodec()
 )
+
+func init() {
+	crypto.RegisterAmino(cdc)
+}
 
 var pageTemplate = template.Must(template.New("page").Parse(tpl))
 
@@ -213,7 +219,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request, chainID string) {
 		return
 	}
 
-	json, err := json.MarshalIndent(genDoc, "", "  ")
+	json, err := cdc.MarshalJSON(genDoc)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -236,7 +242,7 @@ func downloadHandler(w http.ResponseWriter, r *http.Request, chainID string) {
 		return
 	}
 
-	json, err := json.MarshalIndent(genDoc, "", "  ")
+	json, err := cdc.MarshalJSON(genDoc)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -260,7 +266,7 @@ func buildValidator(r *http.Request) (types.GenesisValidator, error) {
 	}
 
 	var pubKey crypto.PubKey
-	err = json.Unmarshal([]byte(r.FormValue("validator_pubkey")), &pubKey)
+	err = cdc.UnmarshalJSON([]byte(r.FormValue("validator_pubkey")), &pubKey)
 	if err != nil {
 		return types.GenesisValidator{}, fmt.Errorf("Failed to parse PubKey: %v", err)
 	}
