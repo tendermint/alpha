@@ -4,6 +4,10 @@ Tiny web app to help you form a genesis file
 
 ![](./alpha.png)
 
+## Requirements
+
+Tendermint >= 0.19
+
 ## Run it on your server
 
 ```
@@ -20,7 +24,7 @@ OR
 docker run -it --rm -p "8080:8080" melekes/alpha
 ```
 
-[More info on Docker Hub](https://hub.docker.com/r/melekes/alpha/)
+[Image on Docker Hub](https://hub.docker.com/r/melekes/alpha/)
 
 ## Advantages
 
