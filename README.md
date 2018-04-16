@@ -4,6 +4,11 @@ Tiny web app to help you form a genesis file
 
 ![](./alpha.png)
 
+- no logs
+- open-source
+- 200 lines of code
+- single file
+
 ## Requirements
 
 Tendermint >= 0.19
@@ -26,16 +31,9 @@ docker run -it --rm -p "8080:8080" melekes/alpha
 
 [Image on Docker Hub](https://hub.docker.com/r/melekes/alpha/)
 
-## Advantages
-
-- no logs
-- open-source
-- 200 lines of code
-- single file
-
 ## Docker
 
-Build docker:
+Build docker image:
 
 ```
 CGO_ENABLED=0 GOOS=linux go build -ldflags "-s -w" -o alpha
