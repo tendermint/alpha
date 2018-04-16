@@ -225,10 +225,16 @@ func viewHandler(w http.ResponseWriter, r *http.Request, chainID string) {
 		return
 	}
 
+	valsCount := len(genDoc.Validators)
+
 	var b strings.Builder
-	fmt.Fprintf(&b, "<h1>%d validators have checked in so far</h1>", len(genDoc.Validators))
+	fmt.Fprintf(&b, "<h1>%d validators have checked in so far</h1>", valsCount)
+	if valsCount > 0 {
+		max, min := validatorsWithMaxMinPowers(genDoc.Validators)
+		fmt.Fprintf(&b, "<p style=\"font-size:1em;\">Validator with max power: %s (%d), min power: %s (%d)</p>", max.Name, max.Power, min.Name, min.Power)
+	}
 	fmt.Fprintf(&b, "<a href=\"/download/%s\" class=\"c-button c-button--info\">Download genesis file</a>", chainID)
-	fmt.Fprintf(&b, "<pre style=\"font-size:16px;\"><code>%s</code></pre>", string(json))
+	fmt.Fprintf(&b, "<pre style=\"font-size:0.7em;\"><code>%s</code></pre>", string(json))
 	err = pageTemplate.Execute(w, template.HTML(b.String()))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -276,6 +282,24 @@ func buildValidator(r *http.Request) (types.GenesisValidator, error) {
 		Power:  power,
 		Name:   r.FormValue("validator_name"),
 	}, nil
+}
+
+// CONTRACT: vals must be non-empty
+func validatorsWithMaxMinPowers(vals []types.GenesisValidator) (max types.GenesisValidator, min types.GenesisValidator) {
+	max = vals[0]
+	min = vals[0]
+
+	for _, v := range vals {
+		if v.Power > max.Power {
+			max = v
+		}
+
+		if v.Power < min.Power {
+			min = v
+		}
+	}
+
+	return
 }
 
 func main() {

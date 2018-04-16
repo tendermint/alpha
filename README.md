@@ -6,7 +6,7 @@ Tiny web app to help you form a genesis file
 
 - no logs
 - open-source
-- 200 lines of code
+- 300 lines of code
 - single file
 
 ## Requirements
