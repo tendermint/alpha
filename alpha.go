@@ -219,7 +219,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request, chainID string) {
 		return
 	}
 
-	json, err := cdc.MarshalJSON(genDoc)
+	json, err := cdc.MarshalJSONIndent(genDoc, "", "  ")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
