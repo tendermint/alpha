@@ -14,7 +14,7 @@ import (
 	"time"
 
 	amino "github.com/tendermint/go-amino"
-	crypto "github.com/tendermint/go-crypto"
+	crypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/types"
 )
 
@@ -146,7 +146,7 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 		ConsensusParams: consensusParams,
 		Validators:      validators,
 		AppHash:         []byte(appHash),
-		AppStateJSON:    appState,
+		AppState:        appState,
 	}
 
 	data := fmt.Sprintf("<h1>Give <a href=\"/new_validator/%s\">this link</a> to other validators && <a href=\"/view/%s\">view genesis JSON</a></h1>", chainID, chainID)
